@@ -1,1 +1,417 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>موقع بتدرّج أزرق ومربع بنفسجي</title>
+<style>
+  :root{
+    --blue-1:#0d1b2a;
+    --blue-2:#1b263b;
+    --blue-3:#415a77;
+    --blue-4:#86a7dd;
+    --purple:#6a00ff;
+    --purple-2:#8b3dff;
+    --purple-3:#b084ff;
+    --danger:#8b0000;
+    --text:#f6f7fb;
+    --muted:#cfd7ff;
+  }
 
+  /* خلفية متحركة من الأزرق الغامق إلى الفاتح */
+  html,body{
+    height:100%;
+  }
+  body{
+    margin:0;
+    color:var(--text);
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Noto Naskh Arabic UI", "Noto Sans Arabic", "Tajawal", Arial, sans-serif;
+    background: linear-gradient(-45deg, var(--blue-1), var(--blue-2), var(--blue-3), var(--blue-4));
+    background-size: 300% 300%;
+    animation: bgShift 16s ease-in-out infinite alternate;
+    display:grid;
+    place-items:center;
+    overflow:hidden;
+  }
+  @keyframes bgShift{
+    0%{ background-position: 0% 50% }
+    100%{ background-position: 100% 50% }
+  }
+
+  /* المربع البنفسجي في الوسط */
+  .card{
+    position:relative;
+    width:min(88vw, 420px);
+    aspect-ratio:1 / 1;
+    background:
+      radial-gradient(120% 120% at 0% 0%, #7a2cff 0%, #5a00d3 55%, #4a00b8 100%);
+    border-radius: 22px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:22px;
+    box-shadow:
+      0 15px 50px rgba(0,0,0,0.35),
+      0 0 0 1px rgba(255,255,255,0.06) inset;
+    overflow:hidden;
+    isolation:isolate;
+  }
+
+  /* توهج الحواف المتحرك */
+  .card::before{
+    content:"";
+    position:absolute;
+    inset:-2px;
+    border-radius:24px;
+    padding:2px;
+    background:
+      conic-gradient(from 0deg,
+        rgba(255,255,255,0) 0deg,
+        rgba(176,132,255,.0) 40deg,
+        rgba(176,132,255,.7) 100deg,
+        rgba(176,132,255,.0) 160deg,
+        rgba(255,255,255,0) 360deg);
+    -webkit-mask:
+      linear-gradient(#000 0 0) content-box,
+      linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor;
+            mask-composite: exclude;
+    animation: spin 7s linear infinite;
+    filter: blur(0.6px);
+    z-index:0;
+  }
+  .card::after{
+    content:"";
+    position:absolute;
+    inset:-28px;
+    border-radius:40px;
+    background: radial-gradient(60% 60% at 50% 50%, rgba(176,132,255,.35), rgba(176,132,255,0) 70%);
+    animation: pulse 3.5s ease-in-out infinite;
+    z-index:-1;
+  }
+  @keyframes spin{
+    to{ transform: rotate(360deg) }
+  }
+  @keyframes pulse{
+    0%,100%{ opacity:.35; transform: scale(1) }
+    50%{ opacity:.6; transform: scale(1.03) }
+  }
+
+  /* زر الرجوع (سهم) */
+  .back-btn{
+    position:absolute;
+    top:10px;
+    left:14px;
+    border:none;
+    background: rgba(255,255,255,0.06);
+    color: #ffdcdc;
+    border: 1px solid rgba(255,255,255,0.18);
+    backdrop-filter: blur(4px);
+    font-size: 16px;
+    padding:10px 12px;
+    border-radius: 12px;
+    cursor:pointer;
+    display:flex;
+    align-items:center;
+    gap:8px;
+    transition: transform .12s ease, background .2s ease, box-shadow .2s ease;
+    box-shadow: 0 6px 18px rgba(0,0,0,0.25);
+  }
+  .back-btn .arrow{
+    color: var(--danger);
+    font-weight: 700;
+    text-shadow: 0 0 10px rgba(139,0,0,.35);
+  }
+  .back-btn:hover{
+    transform: translateY(-1px);
+    background: rgba(255,255,255,0.12);
+    box-shadow: 0 10px 26px rgba(0,0,0,0.32);
+  }
+  .back-btn:active{ transform: translateY(0px) scale(.99) }
+  .back-btn.hidden{ display:none }
+
+  /* حاويات الحالات */
+  .state{
+    position:absolute;
+    inset:0;
+    display:none;
+    padding:28px;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    gap:16px;
+    text-align:center;
+    z-index:1;
+    opacity:0;
+    transform: translateY(12px) scale(.985);
+    transition: opacity .28s ease, transform .28s ease;
+  }
+  .state.active{
+    display:flex;
+    opacity:1;
+    transform: translateY(0) scale(1);
+  }
+
+  .title{
+    font-size: clamp(18px, 2.8vw, 22px);
+    color: #f7f1ff;
+    letter-spacing:.3px;
+    margin-bottom:8px;
+    opacity:.95;
+  }
+  .subtitle{
+    font-size: 13px;
+    color: #efe6ff;
+    opacity:.8;
+    margin-bottom:8px;
+  }
+
+  /* الأزرار */
+  .btn{
+    width: 100%;
+    max-width: 270px;
+    padding: 12px 16px;
+    border-radius: 14px;
+    border: 1px solid rgba(255,255,255,0.18);
+    background: rgba(255,255,255,0.08);
+    color: var(--text);
+    cursor: pointer;
+    font-size: 15px;
+    font-weight: 600;
+    letter-spacing:.3px;
+    transition: transform .12s ease, background .2s ease, box-shadow .2s ease, border-color .2s ease;
+    box-shadow: 0 10px 28px rgba(0,0,0,0.28);
+    backdrop-filter: blur(6px);
+  }
+  .btn:hover{
+    transform: translateY(-1px);
+    background: rgba(255,255,255,0.14);
+    box-shadow: 0 16px 34px rgba(0,0,0,0.33);
+  }
+  .btn:active{ transform: translateY(0px) scale(.995) }
+
+  .btn-primary{
+    background: linear-gradient(135deg, var(--purple-2), var(--purple));
+    border-color: rgba(255,255,255,0.22);
+    box-shadow:
+      0 10px 26px rgba(106,0,255,.45),
+      0 0 0 1px rgba(255,255,255,0.06) inset;
+  }
+  .btn-primary:hover{
+    background: linear-gradient(135deg, var(--purple-3), var(--purple-2));
+  }
+
+  .btn-ghost{
+    background: rgba(255,255,255,0.10);
+  }
+
+  /* الحقول */
+  .field{
+    width:100%;
+    max-width: 300px;
+    text-align:right;
+  }
+  .label{
+    font-size: 13px;
+    color: #f3eaff;
+    margin: 0 6px 6px 0;
+    opacity:.9;
+  }
+  .input{
+    width:100%;
+    padding: 12px 14px;
+    border-radius: 12px;
+    border: 1px solid rgba(255,255,255,0.22);
+    background: rgba(20,0,60,0.28);
+    color: var(--text);
+    outline:none;
+    transition: border-color .2s ease, box-shadow .2s ease, background .2s ease;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.28) inset, 0 6px 20px rgba(0,0,0,0.18);
+  }
+  .input::placeholder{ color: #e8ddff; opacity:.55 }
+  .input:focus{
+    border-color: rgba(176,132,255,.85);
+    box-shadow:
+      0 0 0 3px rgba(176,132,255,.25),
+      0 8px 20px rgba(0,0,0,0.28) inset;
+    background: rgba(20,0,60,0.38);
+  }
+
+  .hint{
+    font-size: 12px;
+    color: var(--muted);
+    margin-top: 4px;
+  }
+
+  .msg{
+    font-size: 14px;
+    margin-top: 4px;
+  }
+  .msg.error{ color: #ffd2d2 }
+  .msg.success{ color: #d5ffd8 }
+
+  /* بسيط للتكيف */
+  @media (max-width:420px){
+    .card{ border-radius: 18px }
+    .card::before{ border-radius: 20px }
+    .back-btn{ top:8px; left:10px }
+  }
+</style>
+</head>
+<body>
+
+  <div class="card" id="card">
+    <button class="back-btn hidden" id="backBtn" aria-label="عودة">
+      <span class="arrow">⟵</span>
+      <span>رجوع</span>
+    </button>
+
+    <!-- الحالة 1: البداية -->
+    <section class="state active" id="state-home" aria-live="polite">
+      <div class="title">مرحباً بك</div>
+      <div class="subtitle">اختر إجراءً للمتابعة</div>
+      <button class="btn btn-primary" id="btn-login">تسجيل دخول</button>
+      <button class="btn btn-ghost" id="btn-browse">تصفح الموقع</button>
+    </section>
+
+    <!-- الحالة 2: اختيار نوع الدخول -->
+    <section class="state" id="state-choose">
+      <div class="title">اختر نوع الحساب</div>
+      <button class="btn btn-primary" id="btn-admin">تسجيل دخول ADMIN</button>
+      <button class="btn btn-ghost" id="btn-user">تسجيل دخول مستخدم</button>
+    </section>
+
+    <!-- الحالة 3: نموذج دخول الأدمن -->
+    <section class="state" id="state-admin">
+      <div class="title">دخول المسؤول</div>
+
+      <div class="field">
+        <div class="label">اسم المستخدم</div>
+        <input class="input" id="admin-username" type="text" placeholder="username / اسم المستخدم" autocomplete="username" />
+      </div>
+
+      <div class="field">
+        <div class="label">كلمة المرور</div>
+        <input class="input" id="admin-password" type="password" placeholder="password / كلمة المرور" autocomplete="current-password" />
+        <div class="hint">بيانات الدخول: Admin / Admin</div>
+      </div>
+
+      <button class="btn btn-primary" id="btn-admin-submit">دخول</button>
+      <div class="msg" id="admin-msg" role="status" aria-live="polite"></div>
+    </section>
+
+    <!-- الحالة 4: تصفح -->
+    <section class="state" id="state-browse">
+      <div class="title">تصفح الموقع</div>
+      <div class="subtitle">استعراض تجريبي — يمكنك العودة في أي وقت</div>
+      <button class="btn btn-ghost" id="btn-browse-ok">حسناً</button>
+    </section>
+
+    <!-- الحالة 5: نجاح الأدمن -->
+    <section class="state" id="state-admin-ok">
+      <div class="title">تم تسجيل الدخول كمسؤول ✅</div>
+      <div class="subtitle">مرحباً بك يا Admin</div>
+      <button class="btn btn-ghost" id="btn-admin-logout">تسجيل خروج</button>
+    </section>
+  </div>
+
+<script>
+  (function(){
+    const states = {
+      home: document.getElementById('state-home'),
+      choose: document.getElementById('state-choose'),
+      admin: document.getElementById('state-admin'),
+      browse: document.getElementById('state-browse'),
+      adminOk: document.getElementById('state-admin-ok'),
+    };
+    const backBtn = document.getElementById('backBtn');
+
+    const stack = ['home']; // مكدس التنقل
+    function showState(name){
+      // إخفاء الكل
+      Object.values(states).forEach(s=>{
+        s.classList.remove('active');
+        // يظل display:flex للحجم لكن نعتمد على opacity/transform للانتقال
+      });
+      // إظهار
+      const el = states[name];
+      if(el){
+        requestAnimationFrame(()=> el.classList.add('active'));
+      }
+      // إظهار/إخفاء زر الرجوع
+      backBtn.classList.toggle('hidden', stack.length <= 1);
+    }
+    function go(name){
+      // منع إضافة متتالية لنفس الحالة
+      const current = stack[stack.length - 1];
+      if(current === name){ return; }
+      stack.push(name);
+      showState(name);
+    }
+    function back(){
+      if(stack.length > 1){
+        stack.pop();
+        const name = stack[stack.length - 1];
+        showState(name);
+      }
+    }
+
+    // أزرار البداية
+    document.getElementById('btn-login').addEventListener('click', ()=> go('choose'));
+    document.getElementById('btn-browse').addEventListener('click', ()=> go('browse'));
+    document.getElementById('btn-browse-ok').addEventListener('click', back);
+
+    // اختيار نوع الدخول
+    document.getElementById('btn-admin').addEventListener('click', ()=> {
+      go('admin');
+      setTimeout(()=> document.getElementById('admin-username').focus(), 50);
+    });
+    document.getElementById('btn-user').addEventListener('click', ()=> {
+      alert('تسجيل دخول المستخدم غير مفعّل في هذا العرض. يرجى استخدام ADMIN للاختبار.');
+    });
+
+    // نموذج الأدمن
+    const userEl = document.getElementById('admin-username');
+    const passEl = document.getElementById('admin-password');
+    const msgEl  = document.getElementById('admin-msg');
+    function tryAdminLogin(){
+      const u = (userEl.value || '').trim();
+      const p = (passEl.value || '').trim();
+      if(u === 'Admin' && p === 'Admin'){
+        msgEl.textContent = 'تم التحقق بنجاح...';
+        msgEl.className = 'msg success';
+        // انتقال سريع
+        setTimeout(()=> {
+          go('adminOk');
+          // تنظيف الحقول
+          userEl.value = '';
+          passEl.value = '';
+          msgEl.textContent = '';
+          msgEl.className = 'msg';
+        }, 400);
+      }else{
+        msgEl.textContent = 'بيانات غير صحيحة. جرّب Admin / Admin';
+        msgEl.className = 'msg error';
+      }
+    }
+    document.getElementById('btn-admin-submit').addEventListener('click', tryAdminLogin);
+    passEl.addEventListener('keydown', (e)=> { if(e.key === 'Enter') tryAdminLogin(); });
+
+    // نجاح الأدمن
+    document.getElementById('btn-admin-logout').addEventListener('click', ()=> {
+      // عودة إلى البداية
+      stack.length = 0;
+      stack.push('home');
+      showState('home');
+    });
+
+    // زر الرجوع
+    backBtn.addEventListener('click', back);
+
+    // تفعيل أول حالة
+    showState('home');
+  })();
+</script>
+</body>
+</html>
